@@ -28,7 +28,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ 
     storage: storage,
-    limits: { fileSize: 100 * 1024 * 1024 }, // Batas maksimal 100MB
+    limits: { fileSize: 100 * 1024 * 1024 }, // Batas maksimal 100MB per file
     fileFilter: (req, file, cb) => {
         const filetypes = /jpeg|jpg|png|webp|heic|mp4|mov|avi|m4v/;
         const mimetype = filetypes.test(file.mimetype);
@@ -65,9 +65,9 @@ app.get('/', (req, res) => {
     });
 });
 
-// Route Upload
+// Route Upload Banyak File Sekaligus (Menggunakan upload.array)
 app.post('/upload', (req, res) => {
-    upload.single('media')(req, res, (err) => {
+    upload.array('media', 20)(req, res, (err) => {
         if (err) {
             fs.readdir(uploadDir, (readErr, files) => {
                 let items = readErr ? [] : files.map(file => ({
