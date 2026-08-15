@@ -28,9 +28,8 @@ const storage = multer.diskStorage({
 
 const upload = multer({ 
     storage: storage,
-    limits: { fileSize: 100 * 1024 * 1024 }, // Batas maksimal dinaikkan menjadi 100MB
+    limits: { fileSize: 100 * 1024 * 1024 }, // Batas maksimal 100MB
     fileFilter: (req, file, cb) => {
-        // Mendukung Foto (jpg, png, webp, heic/live photo) dan Video (mp4, mov, avi, m4v)
         const filetypes = /jpeg|jpg|png|webp|heic|mp4|mov|avi|m4v/;
         const mimetype = filetypes.test(file.mimetype);
         const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
@@ -47,27 +46,26 @@ app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Jika menggunakan Railway Volume, izinkan Express membaca file statis dari folder volume tersebut
 if (process.env.RAILWAY_VOLUME_MOUNT_PATH) {
     app.use('/uploads', express.static(uploadDir));
 }
 
-// Route Utama (Menampilkan Form & Galeri)
+// Route Utama
 app.get('/', (req, res) => {
     fs.readdir(uploadDir, (err, files) => {
         let items = [];
         if (!err) {
             items = files.map(file => ({
                 name: file,
-                url: process.env.RAILWAY_VOLUME_MOUNT_PATH ? `/uploads/${file}` : `/uploads/${file}`,
+                url: `/uploads/${file}`,
                 isVideo: /\.(mp4|mov|avi|m4v)$/i.test(file)
-            })).reverse(); // Urutan terbaru di atas
+            })).reverse();
         }
         res.render('index', { items, error: null });
     });
 });
 
-// Route untuk Handle Upload File
+// Route Upload
 app.post('/upload', (req, res) => {
     upload.single('media')(req, res, (err) => {
         if (err) {
@@ -85,7 +83,7 @@ app.post('/upload', (req, res) => {
     });
 });
 
-// Route untuk Menghapus File
+// Route Hapus
 app.post('/delete/:filename', (req, res) => {
     const filename = req.params.filename;
     const safeFilename = path.basename(filename);
@@ -93,9 +91,7 @@ app.post('/delete/:filename', (req, res) => {
 
     if (fs.existsSync(filePath)) {
         fs.unlink(filePath, (err) => {
-            if (err) {
-                console.error("Gagal menghapus file:", err);
-            }
+            if (err) console.error("Gagal menghapus file:", err);
             res.redirect('/');
         });
     } else {
