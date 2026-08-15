@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rafi Photo Uploader</title>
+    <title>Railway Media Uploader (Foto & Video)</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen py-10 px-4">
     <div class="max-w-4xl mx-auto">
         <header class="text-center mb-10">
-            <h1 class="text-3xl font-bold text-indigo-600 mb-2">Rafi Photo Uploader</h1>
-            <p class="text-slate-500">Unggah foto Anda dengan mudah dan hapus kapan saja.</p>
+            <h1 class="text-3xl font-bold text-indigo-600 mb-2">Media Uploader</h1>
+            <p class="text-slate-500">Kirim foto, live photo, dan video besar (hingga 100MB) dengan mudah.</p>
         </header>
 
         <!-- Form Upload -->
@@ -22,31 +22,38 @@
             <% } %>
 
             <form action="/upload" method="POST" enctype="multipart/form-data" class="flex flex-col sm:flex-row gap-4 items-center">
-                <input type="file" name="photo" required
+                <input type="file" name="media" required
                     class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer">
                 <button type="submit"
                     class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-6 py-2.5 rounded-xl transition duration-200 whitespace-nowrap">
-                    Upload Foto
+                    Upload Media
                 </button>
             </form>
         </div>
 
-        <!-- Galeri Foto -->
-        <h2 class="text-xl font-semibold mb-4">Galeri Foto</h2>
-        <% if (images.length === 0) { %>
-            <p class="text-slate-400 italic">Belum ada foto yang diunggah.</p>
+        <!-- Galeri Media -->
+        <h2 class="text-xl font-semibold mb-4">Galeri Media</h2>
+        <% if (items.length === 0) { %>
+            <p class="text-slate-400 italic">Belum ada file yang diunggah.</p>
         <% } else { %>
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                <% images.forEach(function(img) { %>
+                <% items.forEach(function(item) { %>
                     <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200 flex flex-col justify-between">
-                        <div class="aspect-video bg-slate-100 overflow-hidden">
-                            <img src="<%= img.url %>" alt="Uploaded Photo" class="w-full h-full object-cover hover:scale-105 transition duration-300">
+                        <div class="aspect-video bg-slate-900 overflow-hidden flex items-center justify-center">
+                            <% if (item.isVideo) { %>
+                                <video controls class="w-full h-full object-cover">
+                                    <source src="<%= item.url %>" type="video/mp4">
+                                    Browser Anda tidak Mendukung Pemutar Video.
+                                </video>
+                            <% } else { %>
+                                <img src="<%= item.url %>" alt="Uploaded Media" class="w-full h-full object-cover hover:scale-105 transition duration-300">
+                            <% } %>
                         </div>
                         <div class="p-3 bg-white border-t border-slate-100 flex items-center justify-between">
-                            <a href="<%= img.url %>" target="_blank" class="text-xs text-indigo-600 hover:underline font-medium">Buka Gambar</a>
+                            <a href="<%= item.url %>" target="_blank" class="text-xs text-indigo-600 hover:underline font-medium">Buka File Asli</a>
                             
                             <!-- Tombol Hapus -->
-                            <form action="/delete/<%= img.name %>" method="POST" onsubmit="return confirm('Yakin ingin menghapus foto ini?');">
+                            <form action="/delete/<%= item.name %>" method="POST" onsubmit="return confirm('Yakin ingin menghapus file ini?');">
                                 <button type="submit" class="text-xs bg-red-50 hover:bg-red-100 text-red-600 font-medium px-3 py-1.5 rounded-lg transition duration-200">
                                     Hapus
                                 </button>
