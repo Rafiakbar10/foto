@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Railway Photo Uploader</title>
+    <title>Rafi Photo Uploader</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen py-10 px-4">
     <div class="max-w-4xl mx-auto">
         <header class="text-center mb-10">
             <h1 class="text-3xl font-bold text-indigo-600 mb-2">Railway Photo Uploader</h1>
-            <p class="text-slate-500">Unggah foto Anda dengan mudah dan tampilkan secara instan.</p>
+            <p class="text-slate-500">Unggah foto Anda dengan mudah dan hapus kapan saja.</p>
         </header>
 
         <!-- Form Upload -->
@@ -38,12 +38,19 @@
         <% } else { %>
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                 <% images.forEach(function(img) { %>
-                    <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200 flex flex-col">
+                    <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200 flex flex-col justify-between">
                         <div class="aspect-video bg-slate-100 overflow-hidden">
-                            <img src="<%= img %>" alt="Uploaded Photo" class="w-full h-full object-cover hover:scale-105 transition duration-300">
+                            <img src="<%= img.url %>" alt="Uploaded Photo" class="w-full h-full object-cover hover:scale-105 transition duration-300">
                         </div>
-                        <div class="p-3 bg-white border-t border-slate-100 text-right">
-                            <a href="<%= img %>" target="_blank" class="text-xs text-indigo-600 hover:underline font-medium">Buka Gambar Asli</a>
+                        <div class="p-3 bg-white border-t border-slate-100 flex items-center justify-between">
+                            <a href="<%= img.url %>" target="_blank" class="text-xs text-indigo-600 hover:underline font-medium">Buka Gambar</a>
+                            
+                            <!-- Tombol Hapus -->
+                            <form action="/delete/<%= img.name %>" method="POST" onsubmit="return confirm('Yakin ingin menghapus foto ini?');">
+                                <button type="submit" class="text-xs bg-red-50 hover:bg-red-100 text-red-600 font-medium px-3 py-1.5 rounded-lg transition duration-200">
+                                    Hapus
+                                </button>
+                            </form>
                         </div>
                     </div>
                 <% }); %>
