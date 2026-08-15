@@ -3,66 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Railway Media Uploader (Foto & Video)</title>
+    <title>CloudMedia - Ruang Penyimpanan HD</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen py-10 px-4">
-    <div class="max-w-4xl mx-auto">
-        <header class="text-center mb-10">
-            <h1 class="text-3xl font-bold text-indigo-600 mb-2">Media Uploader</h1>
-            <p class="text-slate-500">Kirim foto, live photo, dan video besar (hingga 100MB) dengan mudah.</p>
+<body class="bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-slate-100 min-h-screen py-12 px-4 selection:bg-indigo-500 selection:text-white">
+    <div class="max-w-5xl mx-auto" x-data="{ uploading: false, progress: 0, previewUrl: null, previewIsVideo: false }">
+        
+        <!-- Header -->
+        <header class="text-center mb-12">
+            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 uppercase tracking-widest">Railway Cloud Storage</span>
+            <h1 class="text-4xl font-extrabold mt-3 tracking-tight bg-gradient-to-r from-white via-indigo-200 to-indigo-400 bg-clip-text text-transparent">Media Vault & Live Uploader</h1>
+            <p class="text-slate-400 mt-2 text-sm">Simpan foto, live photo, dan video HD hingga 100MB dengan aman.</p>
         </header>
 
-        <!-- Form Upload -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-10">
-            <% if (error) { %>
-                <div class="mb-4 p-4 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
-                    <%= error %>
-                </div>
-            <% } %>
+        <!-- Error Alert -->
+        <% if (error) { %>
+            <div class="mb-8 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl text-sm flex items-center justify-between">
+                <span><%= error %></span>
+            </div>
+        <% } %>
 
-            <form action="/upload" method="POST" enctype="multipart/form-data" class="flex flex-col sm:flex-row gap-4 items-center">
-                <input type="file" name="media" required
-                    class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer">
-                <button type="submit"
-                    class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-6 py-2.5 rounded-xl transition duration-200 whitespace-nowrap">
-                    Upload Media
+        <!-- Form Upload Drag & Drop -->
+        <div class="bg-slate-900/60 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-slate-800 mb-12">
+            <form action="/upload" method="POST" enctype="multipart/form-data" 
+                  @submit="uploading = true; simulateProgress();"
+                  class="flex flex-col items-center justify-center border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-2xl p-8 transition-all group cursor-pointer relative">
+                
+                <input type="file" name="media" required 
+                       class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
+                       @change="let file = $event.target.files[0]; if(file) $refs.fileName.innerText = file.name">
+                
+                <div class="w-16 h-16 rounded-2xl bg-indigo-600/10 text-indigo-400 flex items-center justify-center mb-4 group-hover:scale-110 transition duration-300">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                </div>
+                
+                <p class="text-sm font-medium text-slate-200 mb-1">Seret file kesini atau <span class="text-indigo-400 underline">pilih dari perangkat</span></p>
+                <p x-ref="fileName" class="text-xs text-slate-400 italic mb-4">Mendukung Foto, Live Photo, & Video (Maks. 100MB)</p>
+                
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-8 py-3 rounded-xl transition shadow-lg shadow-indigo-600/30 z-20">
+                    Mulai Upload
                 </button>
             </form>
+
+            <!-- Progress Bar Animasi -->
+            <div x-show="uploading" class="mt-6" style="display: none;">
+                <div class="flex justify-between text-xs text-slate-400 mb-2">
+                    <span>Mengunggah file ke server...</span>
+                    <span x-text="progress + '%'"></span>
+                </div>
+                <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                    <div class="bg-indigo-500 h-full transition-all duration-300" :style="`width: ${progress}%`"></div>
+                </div>
+            </div>
         </div>
 
-        <!-- Galeri Media -->
-        <h2 class="text-xl font-semibold mb-4">Galeri Media</h2>
+        <!-- Galeri Media Estetik -->
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold tracking-tight">Koleksi Media (<%= items.length %>)</h2>
+        </div>
+
         <% if (items.length === 0) { %>
-            <p class="text-slate-400 italic">Belum ada file yang diunggah.</p>
+            <div class="text-center py-20 bg-slate-900/30 rounded-3xl border border-slate-800/60">
+                <p class="text-slate-500 italic">Belum ada file media yang tersimpan.</p>
+            </div>
         <% } else { %>
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                 <% items.forEach(function(item) { %>
-                    <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200 flex flex-col justify-between">
-                        <div class="aspect-video bg-slate-900 overflow-hidden flex items-center justify-center">
+                    <div class="bg-slate-900/60 backdrop-blur-md rounded-2xl overflow-hidden border border-slate-800 flex flex-col justify-between group hover:border-slate-700 transition">
+                        
+                        <!-- Thumbnail Media -->
+                        <div class="aspect-video bg-slate-950 overflow-hidden relative cursor-pointer"
+                             @click="previewUrl = '<%= item.url %>'; previewIsVideo = <%= item.isVideo %>">
                             <% if (item.isVideo) { %>
-                                <video controls class="w-full h-full object-cover">
+                                <div class="absolute inset-0 flex items-center justify-center bg-black/40 z-10">
+                                    <span class="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-lg">▶</span>
+                                </div>
+                                <video class="w-full h-full object-cover opacity-80 group-hover:scale-105 transition duration-500">
                                     <source src="<%= item.url %>" type="video/mp4">
-                                    Browser Anda tidak Mendukung Pemutar Video.
                                 </video>
                             <% } else { %>
-                                <img src="<%= item.url %>" alt="Uploaded Media" class="w-full h-full object-cover hover:scale-105 transition duration-300">
+                                <img src="<%= item.url %>" alt="Media" class="w-full h-full object-cover opacity-90 group-hover:scale-105 transition duration-500">
                             <% } %>
+                            <span class="absolute top-3 left-3 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-black/60 backdrop-blur-md text-white z-10">
+                                <%= item.name.split('.').pop() %>
+                            </span>
                         </div>
-                        <div class="p-3 bg-white border-t border-slate-100 flex items-center justify-between">
-                            <a href="<%= item.url %>" target="_blank" class="text-xs text-indigo-600 hover:underline font-medium">Buka File Asli</a>
-                            
-                            <!-- Tombol Hapus -->
-                            <form action="/delete/<%= item.name %>" method="POST" onsubmit="return confirm('Yakin ingin menghapus file ini?');">
-                                <button type="submit" class="text-xs bg-red-50 hover:bg-red-100 text-red-600 font-medium px-3 py-1.5 rounded-lg transition duration-200">
-                                    Hapus
-                                </button>
-                            </form>
+
+                        <!-- Aksi Panel -->
+                        <div class="p-4 flex items-center justify-between border-t border-slate-800/80">
+                            <button @click="navigator.clipboard.writeText(window.location.origin + '<%= item.url %>'); alert('Link berhasil disalin!');" 
+                                    class="text-xs font-medium text-slate-400 hover:text-indigo-400 transition">
+                                Salin Link
+                            </button>
+
+                            <div class="flex items-center gap-3">
+                                <a href="<%= item.url %>" target="_blank" class="text-xs font-semibold text-indigo-400 hover:underline">Unduh HD</a>
+                                <form action="/delete/<%= item.name %>" method="POST" onsubmit="return confirm('Hapus file ini permanen?');">
+                                    <button type="submit" class="text-xs text-red-400 hover:text-red-300 transition">Hapus</button>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 <% }); %>
             </div>
         <% } %>
+
+        <!-- Modal Lightbox Preview (Fullscreen Viewer) -->
+        <div x-show="previewUrl" class="fixed inset-0 bg-black/90 backdrop-blur-xl z-50 flex items-center justify-center p-4" style="display: none;" @click.self="previewUrl = null">
+            <div class="relative max-w-4xl w-full max-h-[90vh] flex flex-col items-center">
+                <button @click="previewUrl = null" class="absolute -top-12 right-0 text-white text-xl font-bold bg-slate-800 hover:bg-slate-700 w-10 h-10 rounded-full flex items-center justify-center">✕</button>
+                
+                <template x-if="previewIsVideo">
+                    <video controls autoplay class="max-h-[80vh] rounded-2xl shadow-2xl">
+                        <source :src="previewUrl" type="video/mp4">
+                    </video>
+                </template>
+                <template x-if="!previewIsVideo">
+                    <img :src="previewUrl" class="max-h-[80vh] object-contain rounded-2xl shadow-2xl">
+                </template>
+            </div>
+        </div>
+
     </div>
+
+    <!-- Script Simulasi Progress Bar -->
+    <script>
+        function simulateProgress() {
+            let p = 0;
+            let interval = setInterval(() => {
+                p += 5;
+                if(p > 95) clearInterval(interval);
+                Alpine.store('progressVal', p); // atau langsung ubah state jika diperlukan
+            }, 100);
+        }
+    </script>
 </body>
 </html>
