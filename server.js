@@ -3,7 +3,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-const app =express();
+const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Pastikan folder public/uploads tersedia
@@ -47,7 +47,11 @@ app.get('/', (req, res) => {
     fs.readdir(uploadDir, (err, files) => {
         let images = [];
         if (!err) {
-            images = files.map(file => `/uploads/${file}`).reverse(); // Terbaru di atas
+            // Mengirimkan nama file asli beserta path-nya untuk keperluan hapus
+            images = files.map(file => ({
+                name: file,
+                url: `/uploads/${file}`
+            })).reverse(); // Terbaru di atas
         }
         res.render('index', { images, error: null });
     });
@@ -58,13 +62,32 @@ app.post('/upload', (req, res) => {
     upload.single('photo')(req, res, (err) => {
         if (err) {
             fs.readdir(uploadDir, (readErr, files) => {
-                let images = readErr ? [] : files.map(file => `/uploads/${file}`).reverse();
+                let images = readErr ? [] : files.map(file => ({ name: file, url: `/uploads/${file}` })).reverse();
                 return res.render('index', { images, error: err.message });
             });
         } else {
             res.redirect('/');
         }
     });
+});
+
+// Route untuk Menghapus Foto
+app.post('/delete/:filename', (req, res) => {
+    const filename = req.params.filename;
+    // Mencegah path traversal attack sederhana
+    const safeFilename = path.basename(filename);
+    const filePath = path.join(uploadDir, safeFilename);
+
+    if (fs.existsSync(filePath)) {
+        fs.unlink(filePath, (err) => {
+            if (err) {
+                console.error("Gagal menghapus file:", err);
+            }
+            res.redirect('/');
+        });
+    } else {
+        res.redirect('/');
+    }
 });
 
 app.listen(PORT, '0.0.0.0', () => {
