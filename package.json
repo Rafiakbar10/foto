@@ -1,7 +1,7 @@
 {
-  "name": "railway-photo-uploader",
+  "name": "railway-media-uploader",
   "version": "1.0.0",
-  "description": "Simple photo uploader for Railway",
+  "description": "Media uploader for photos, live photos, and videos on Railway",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
