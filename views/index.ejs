@@ -18,9 +18,9 @@
 
     <main class="max-w-5xl mx-auto px-6 py-10 space-y-12">
 
-        <!-- Form Upload Langsung (Tanpa Pop-up) -->
+        <!-- Form Upload Multi-File -->
         <div class="bg-neutral-900/50 border border-neutral-800/80 rounded-3xl p-6 md:p-8 backdrop-blur-xl">
-            <h2 class="text-xs uppercase tracking-widest text-neutral-400 font-medium mb-4">Unggah File Baru</h2>
+            <h2 class="text-xs uppercase tracking-widest text-neutral-400 font-medium mb-4">Unggah Banyak File Sekaligus</h2>
             
             <% if (error) { %>
                 <div class="mb-4 p-3 bg-red-950/50 border border-red-900 text-red-400 text-xs rounded-xl">
@@ -29,11 +29,12 @@
             <% } %>
 
             <form action="/upload" method="POST" enctype="multipart/form-data" class="flex flex-col md:flex-row items-center gap-4">
-                <input type="file" name="media" required 
+                <!-- Tambahan atribut 'multiple' di sini -->
+                <input type="file" name="media" multiple required 
                        class="w-full text-xs text-neutral-400 file:mr-4 file:py-3 file:px-6 file:rounded-full file:border-0 file:text-xs file:font-medium file:bg-neutral-800 file:text-neutral-200 hover:file:bg-neutral-700 cursor-pointer bg-neutral-950 rounded-full border border-neutral-800">
                 <button type="submit" 
                         class="w-full md:w-auto px-8 py-3 bg-white text-black text-xs font-medium uppercase tracking-widest rounded-full hover:bg-neutral-200 transition whitespace-nowrap shadow-lg">
-                    Kirim Media
+                    Kirim Semua
                 </button>
             </form>
         </div>
@@ -69,7 +70,7 @@
                                 </template>
                             </div>
 
-                            <!-- Panel Tombol Aksi Bawah (Menarik, Rapi & Fungsional) -->
+                            <!-- Panel Tombol Aksi Bawah -->
                             <div class="p-5 flex flex-wrap items-center justify-between gap-4 bg-neutral-900/80 border-t border-neutral-800">
                                 <span class="text-[10px] uppercase tracking-widest text-neutral-500 font-mono" x-text="item.isVideo ? 'Format: Video' : 'Format: Foto HD'"></span>
                                 
