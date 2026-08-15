@@ -6,8 +6,11 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Pastikan folder public/uploads tersedia
-const uploadDir = path.join(__dirname, 'public', 'uploads');
+// Penentuan folder upload (Mendukung Railway Volume atau lokal)
+const uploadDir = process.env.RAILWAY_VOLUME_MOUNT_PATH 
+    ? path.join(process.env.RAILWAY_VOLUME_MOUNT_PATH, 'uploads') 
+    : path.join(__dirname, 'public', 'uploads');
+
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -25,15 +28,17 @@ const storage = multer.diskStorage({
 
 const upload = multer({ 
     storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // Batas maksimal 5MB
+    limits: { fileSize: 100 * 1024 * 1024 }, // Batas maksimal dinaikkan menjadi 100MB
     fileFilter: (req, file, cb) => {
-        const filetypes = /jpeg|jpg|png|webp/;
+        // Mendukung Foto (jpg, png, webp, heic/live photo) dan Video (mp4, mov, avi, m4v)
+        const filetypes = /jpeg|jpg|png|webp|heic|mp4|mov|avi|m4v/;
         const mimetype = filetypes.test(file.mimetype);
         const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-        if (mimetype && extname) {
+        
+        if (mimetype || extname) {
             return cb(null, true);
         }
-        cb(new Error("Hanya file gambar (jpg, jpeg, png, webp) yang diperbolehkan!"));
+        cb(new Error("Hanya file gambar dan video yang diperbolehkan!"));
     }
 });
 
@@ -42,28 +47,37 @@ app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Route Utama (Menampilkan Form & Daftar Foto)
+// Jika menggunakan Railway Volume, izinkan Express membaca file statis dari folder volume tersebut
+if (process.env.RAILWAY_VOLUME_MOUNT_PATH) {
+    app.use('/uploads', express.static(uploadDir));
+}
+
+// Route Utama (Menampilkan Form & Galeri)
 app.get('/', (req, res) => {
     fs.readdir(uploadDir, (err, files) => {
-        let images = [];
+        let items = [];
         if (!err) {
-            // Mengirimkan nama file asli beserta path-nya untuk keperluan hapus
-            images = files.map(file => ({
+            items = files.map(file => ({
                 name: file,
-                url: `/uploads/${file}`
-            })).reverse(); // Terbaru di atas
+                url: process.env.RAILWAY_VOLUME_MOUNT_PATH ? `/uploads/${file}` : `/uploads/${file}`,
+                isVideo: /\.(mp4|mov|avi|m4v)$/i.test(file)
+            })).reverse(); // Urutan terbaru di atas
         }
-        res.render('index', { images, error: null });
+        res.render('index', { items, error: null });
     });
 });
 
-// Route untuk Handle Upload Foto
+// Route untuk Handle Upload File
 app.post('/upload', (req, res) => {
-    upload.single('photo')(req, res, (err) => {
+    upload.single('media')(req, res, (err) => {
         if (err) {
             fs.readdir(uploadDir, (readErr, files) => {
-                let images = readErr ? [] : files.map(file => ({ name: file, url: `/uploads/${file}` })).reverse();
-                return res.render('index', { images, error: err.message });
+                let items = readErr ? [] : files.map(file => ({
+                    name: file,
+                    url: `/uploads/${file}`,
+                    isVideo: /\.(mp4|mov|avi|m4v)$/i.test(file)
+                })).reverse();
+                return res.render('index', { items, error: err.message });
             });
         } else {
             res.redirect('/');
@@ -71,10 +85,9 @@ app.post('/upload', (req, res) => {
     });
 });
 
-// Route untuk Menghapus Foto
+// Route untuk Menghapus File
 app.post('/delete/:filename', (req, res) => {
     const filename = req.params.filename;
-    // Mencegah path traversal attack sederhana
     const safeFilename = path.basename(filename);
     const filePath = path.join(uploadDir, safeFilename);
 
